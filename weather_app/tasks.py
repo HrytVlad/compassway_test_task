@@ -4,7 +4,7 @@ from .parser import parse_weather
 
 from celery import shared_task, Celery
 
-app = Celery()
+from weather_project.celery import app
 
 
 @app.on_after_configure.connect
