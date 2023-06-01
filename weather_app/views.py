@@ -22,7 +22,9 @@ class TaskScheduleView(APIView):
             minute = schedule.get("minute")
 
             # Оновлення розкладу задачі через Celery Beat
-            app.conf.beat_schedule["run-every-day-at-9am"]["schedule"] = crontab(hour=hour, minute=minute)
+            app.conf.beat_schedule["run-every-day-at-9am"]["schedule"] = crontab(
+                hour=hour, minute=minute
+            )
 
             return Response(serializer.data, status=status.HTTP_200_OK)
 

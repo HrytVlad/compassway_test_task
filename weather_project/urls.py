@@ -22,6 +22,8 @@ from weather_app.views import WeatherViewSet, TaskScheduleView
 router = routers.DefaultRouter()
 router.register(r"weather", WeatherViewSet)
 
-urlpatterns = [path("admin/", admin.site.urls),
-               path("api/", include(router.urls)),
-               path("api/task-schedule/", TaskScheduleView.as_view(), name='task-schedule')]
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("api/", include(router.urls)),
+    path("api/task-schedule/", TaskScheduleView.as_view(), name="task-schedule"),
+]
