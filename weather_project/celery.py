@@ -22,7 +22,7 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 app.conf.beat_schedule = {
     "run-every-day-at-9am": {
         "task": "weather_app.tasks.run_parse_weather",
-        "schedule": crontab(hour=0, minute=1),
+        "schedule": crontab(minute=0, hour=9),
     },
 }
 
