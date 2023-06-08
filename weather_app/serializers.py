@@ -1,4 +1,4 @@
-from celery.schedules import crontab
+from django_celery_beat.models import PeriodicTask, CrontabSchedule
 from rest_framework import serializers
 
 from weather_app.models import Weather
@@ -10,13 +10,26 @@ class WeatherSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class TaskScheduleSerializer(serializers.Serializer):
-    hour = serializers.IntegerField(min_value=0, max_value=23)
-    minute = serializers.IntegerField(min_value=0, max_value=59)
+class CrontabScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CrontabSchedule
+        fields = ("minute", "hour")
 
-    def validate(self, attrs):
-        hour = attrs.get("hour")
-        minute = attrs.get("minute")
-        if hour is not None and minute is not None:
-            crontab(hour=hour, minute=minute)
-        return attrs
+
+class TaskScheduleSerializer(serializers.ModelSerializer):
+    crontab = CrontabScheduleSerializer()
+
+    class Meta:
+        model = PeriodicTask
+        fields = ("name", "crontab", "enabled", "last_run_at", "total_run_count")
+
+    def update(self, instance, validated_data):
+        crontab_data = validated_data.pop("crontab", None)
+        if crontab_data:
+            instance.crontab.minute = crontab_data.get(
+                "minute", instance.crontab.minute
+            )
+            instance.crontab.hour = crontab_data.get("hour", instance.crontab.hour)
+            instance.crontab.save()
+
+        return super().update(instance, validated_data)

@@ -1,11 +1,9 @@
-from celery.schedules import crontab
+from django_celery_beat.models import PeriodicTask
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from weather_app.models import Weather
 from weather_app.serializers import WeatherSerializer, TaskScheduleSerializer
-from weather_project.celery import app
 
 
 class WeatherViewSet(viewsets.ModelViewSet):
@@ -13,19 +11,38 @@ class WeatherViewSet(viewsets.ModelViewSet):
     serializer_class = WeatherSerializer
 
 
-class TaskScheduleView(APIView):
-    def post(self, request):
-        serializer = TaskScheduleSerializer(data=request.data)
+class TaskScheduleViewSet(viewsets.ViewSet):
+    def list(self, request):
+        try:
+            task = PeriodicTask.objects.get(name='run-every-day-at-9am')
+        except PeriodicTask.DoesNotExist:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = TaskScheduleSerializer(instance=task)
+        return Response(serializer.data)
+
+    def create(self, request):
+        try:
+            task = PeriodicTask.objects.get(name='run-every-day-at-9am')
+            serializer = TaskScheduleSerializer(instance=task, data=request.data)
+        except PeriodicTask.DoesNotExist:
+            serializer = TaskScheduleSerializer(data=request.data)
+
         if serializer.is_valid():
-            schedule = serializer.validated_data
-            hour = schedule.get("hour")
-            minute = schedule.get("minute")
+            serializer.save()
+            return Response({'message': 'Task schedule created'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            # Оновлення розкладу задачі через Celery Beat
-            app.conf.beat_schedule["run-every-day-at-9am"]["schedule"] = crontab(
-                hour=hour, minute=minute
-            )
+    def update(self, request, *args, **kwargs):
+        try:
+            task = PeriodicTask.objects.get(name='run-every-day-at-9am')
+        except PeriodicTask.DoesNotExist:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = TaskScheduleSerializer(instance=task, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Task schedule updated'}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

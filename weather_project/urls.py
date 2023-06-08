@@ -17,13 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
-from weather_app.views import WeatherViewSet, TaskScheduleView
+
+from weather_app.views import WeatherViewSet, TaskScheduleViewSet
 
 router = routers.DefaultRouter()
 router.register(r"weather", WeatherViewSet)
-
+router.register(r"task-schedule", TaskScheduleViewSet, basename="task-schedule")
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
-    path("api/task-schedule/", TaskScheduleView.as_view(), name="task-schedule"),
 ]
